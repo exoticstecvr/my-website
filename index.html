@@ -1,1 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Scramjet Tutorial</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Scramjet Web Proxy — Easy Setup Guide</h1>
+
+    <p><strong>What is Scramjet?</strong></p>
+    <p>Scramjet is an interception-based web proxy made to bypass censorship, browser restrictions, and to improve web proxy performance. It’s open source and designed by <a href="https://github.com/MercuryWorkshop" target="_blank">Mercury Workshop</a>.</p>
+
+    <hr>
+
+    <h2>🧩 Step 1 — Install Scramjet</h2>
+    <pre><code>pnpm i @mercuryworkshop/scramjet@2.0.0-alpha</code></pre>
+
+    <h2>🗂️ Step 2 — Set up your files</h2>
+    <p>Create a folder called <code>/scram/</code> in your website and serve the Scramjet build files from there.</p>
+    <p>Example folder:</p>
+    <pre><code>/scram/scramjet.all.js
+/scram/scramjet.sync.js
+/scram/scramjet.wasm.wasm</code></pre>
+
+    <h2>⚙️ Step 3 — Make your Service Worker</h2>
+    <p>Create a file named <code>sw.js</code> with this code:</p>
+    <pre><code>importScripts("/scram/scramjet.all.js");
+
+const { ScramjetServiceWorker } = $scramjetLoadWorker();
+const scramjet = new ScramjetServiceWorker();
+
+self.addEventListener("fetch", (event) => {
+  event.respondWith(async () => {
+    await scramjet.loadConfig();
+    if (scramjet.route(event)) {
+      return scramjet.fetch(event);
+    }
+    return fetch(event.request);
+  });
+});</code></pre>
+
+    <h2>🧠 Step 4 — Initialize Scramjet</h2>
+    <p>Add this JavaScript to your main page (in a script tag or <code>main.js</code>):</p>
+    <pre><code>const { ScramjetController } = $scramjetLoadController();
+
+const scramjet = new ScramjetController({
+  files: {
+    wasm: "/scram/scramjet.wasm.wasm",
+    all: "/scram/scramjet.all.js",
+    sync: "/scram/scramjet.sync.js",
+  }
+});
+
+scramjet.init();
+navigator.serviceWorker.register("sw.js");</code></pre>
+
+    <h2>🔌 Step 5 — Initialize BareMux (Optional)</h2>
+    <p>Scramjet can connect to a BareMux worker:</p>
+    <pre><code>const connection = new BareMux.BareMuxConnection("/baremux/worker.js");
+connection.setTransport(...);</code></pre>
+
+    <h2>📦 Step 6 — Optional: TypeScript Config</h2>
+    <p>Add this to your <code>tsconfig.json</code> if using TypeScript:</p>
+    <pre><code>{
+  "compilerOptions": {
+    "typeRoots": ["@mercuryworkshop/scramjet"]
+  }
+}</code></pre>
+
+    <h2>⚡ Step 7 — Updating</h2>
+    <p>If you update to a new build, clear the cache and reinstall:</p>
+    <pre><code>pnpm cache delete @mercuryworkshop/scramjet
+pnpm install</code></pre>
+
+    <hr>
+    <p>That’s it! You now understand how Scramjet works and how to set it up. 🚀</p>
+    <p>For more info, visit the <a href="https://docs.titaniumnetwork.org/proxies/scramjet" target="_blank">official Scramjet docs</a>.</p>
+  </div>
+</body>
+</html>
 
